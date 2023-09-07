@@ -4,7 +4,6 @@ class User extends Sequelize.Model {
   static initiate(sequelize) {
     User.init(
       {
-        // 테이블 설정.
         email: {
           type: Sequelize.STRING(40),
           allowNull: true, // 카카오 같은경우는 없을수도 있다.
@@ -16,22 +15,21 @@ class User extends Sequelize.Model {
         },
         password: {
           type: Sequelize.STRING(100), // 암호화되면 길어진다.
-          allowNull: false,
+          allowNull: true,
         },
         provider: {
-          type: Sequelize.ENUM("local", "kakao"), // 문자열로하면 자유롭게 입력하기 때문에, ENUM은 lacal,kakao 둘중에 하나만 적겠금 제한. 사용자 구분
+          type: Sequelize.ENUM("local", "kakao"), // 문자열로하면 자유롭게 입력하기 때문에, ENUM은 local,kakao 둘중에 하나만 적겠금 제한. 사용자 구분
           allowNull: false,
-          defaultValue: "lacal",
+          defaultValue: "local",
         },
-        snsID: {
+        snsId: {
           // 카카오 로그인 전용
           type: Sequelize.STRING(30),
-          allowNull: false,
+          allowNull: true,
         },
       },
       {
-        // initiate의 두번째 인수는 테이블 옵션이다.
-        sequelize,
+        sequelize, // initiate의 두번째 인수는 테이블 옵션이다.
         timestamps: true, // createdAt, updatedAt 유저 생성일과 회원가입하는 시간과 유저 정보 수정된 시간을 자동으로 기록해준다.
         underscored: false, //true로 설정하면 created_at, updated_at
         modelName: "User", // 자바스크립트에서 쓰는 이름
@@ -43,7 +41,21 @@ class User extends Sequelize.Model {
     );
   }
 
-  static associate(db) {}
+  static associate(db) {
+    db.User.hasMany(db.Post);
+    db.User.belongsToMany(db.User, {
+      // 팔로워
+      foreignKey: "followingId", // 1. 유명연예인의 id는 팔로잉이다. id를 찾아야지만
+      as: "Followers", // 2. 그사람의 팔로워들을 그 다음에 찾을 수 있다.
+      through: "Follow",
+    });
+    db.User.belongsToMany(db.User, {
+      // 팔로잉
+      foreignKey: "followerId", // 1. 내 id를 찾아야지만,
+      as: "Followings", // 2. 팔로잉한 사람들을 찾을 수 있다.
+      through: "Follow",
+    });
+  }
 }
 
 module.exports = User;

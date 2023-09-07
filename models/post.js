@@ -27,7 +27,11 @@ class Post extends Sequelize.Model {
     );
   }
 
-  static associate(db) {}
+  static associate(db) {
+    db.Post.belongsTo(db.User); // User에 속해있다.
+    db.Post.belongsToMany(db.Hashtag, { through: "PostHashtag" }); // 게시글과 해시태그는 다대다 관계
+    // db.sequelize.models.PostHashtag; 중간 테이블 접근하는 방법
+  }
 }
 
 module.exports = Post;

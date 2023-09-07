@@ -8,14 +8,25 @@ const dotenv = require("dotenv");
 
 dotenv.config(); // 위치 중요
 const pageRouter = require("./routes/page");
+const { sequelize } = require("./models"); // models에서 sequelize를 가져옴.
 
 const app = express();
+passportConfig();
 app.set("port", process.env.PORT || 8001);
 app.set("view engine", "html");
 nunjucks.configure("views", {
   express: app,
   watch: true,
 });
+
+sequelize
+  .sync({ force: true }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
+  .then(() => {
+    console.log("데이터베이스 연결 성공");
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
