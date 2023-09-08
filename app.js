@@ -5,10 +5,13 @@ const path = require("path");
 const session = require("express-session");
 const nunjucks = require("nunjucks");
 const dotenv = require("dotenv");
+const passport = require("passport");
 
 dotenv.config(); // 위치 중요
 const pageRouter = require("./routes/page");
+const authRouter = require("./routes/auth");
 const { sequelize } = require("./models"); // models에서 sequelize를 가져옴.
+const passportConfig = require("./passport"); // passport 설정을 불러옴.
 
 const app = express();
 passportConfig();
@@ -18,6 +21,7 @@ nunjucks.configure("views", {
   express: app,
   watch: true,
 });
+passportConfig(); // passport 설정을 호출함. 실행.
 
 sequelize
   .sync({ force: true }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
@@ -30,8 +34,8 @@ sequelize
 
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json()); // req.body를 ajax json 요청으로부터
+app.use(express.urlencoded({ extended: false })); // req.body를 폼으로부터
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(
   session({
@@ -44,8 +48,12 @@ app.use(
     },
   })
 );
+// passport 미들웨어 위치 중요! 꼭 express session 미들웨어 밑에 작성.
+app.use(passport.initialize()); // req.user, req.login, req.isAuthenticate, req.logout 생성.
+app.use(passport.session()); // passport를 쿠키로 로그인을 도와주는 역할.
 
 app.use("/", pageRouter);
+app.use("/auth", authRouter);
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
