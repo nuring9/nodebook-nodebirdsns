@@ -16,4 +16,5 @@ module.exports = () => {
       .catch((err) => done(err));
   });
   local();
+  kakao();
 };

@@ -6,12 +6,14 @@ const User = require("../models/user");
 
 module.exports = () => {
   passport.use(
+    // 1. 첫번째 인수, 전략에 관한 설정
     new LocalStrategy(
       {
         usernameField: "email", // req.body.email 를 usernameField로 하겠다.
         passwordField: "password", // req.body.password 를 passwordField로 하겠다.
         passReqToCallback: false, // 이게 true 면 async에 req가 추가가 된다. fals면 req가 빠짐.
       },
+      // 2. 두번째 인수, 실제 전략을 수행.
       async (email, password, done) => {
         // done(서버실패, 성공유저, 로직실패)
         try {
