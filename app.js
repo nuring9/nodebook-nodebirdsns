@@ -14,15 +14,13 @@ const { sequelize } = require("./models"); // models에서 sequelize를 가져�
 const passportConfig = require("./passport"); // passport 설정을 불러옴.
 
 const app = express();
-passportConfig();
+passportConfig(); // 패스포드 설정
 app.set("port", process.env.PORT || 8001);
 app.set("view engine", "html");
 nunjucks.configure("views", {
   express: app,
   watch: true,
 });
-passportConfig(); // passport 설정을 호출함. 실행.
-
 sequelize
   .sync({ force: true }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
   .then(() => {
