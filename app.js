@@ -10,6 +10,8 @@ const passport = require("passport");
 dotenv.config(); // 위치 중요
 const pageRouter = require("./routes/page");
 const authRouter = require("./routes/auth");
+const postRouter = require("./routes/post");
+
 const { sequelize } = require("./models"); // models에서 sequelize를 가져옴.
 const passportConfig = require("./passport"); // passport 설정을 불러옴.
 
@@ -22,7 +24,7 @@ nunjucks.configure("views", {
   watch: true,
 });
 sequelize
-  .sync({ force: true }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
+  .sync({ force: false }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
   .then(() => {
     console.log("데이터베이스 연결 성공");
   })
@@ -32,6 +34,7 @@ sequelize
 
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/img", express.static(path.join(__dirname, "uploads")));
 app.use(express.json()); // req.body를 ajax json 요청으로부터
 app.use(express.urlencoded({ extended: false })); // req.body를 폼으로부터
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -52,6 +55,7 @@ app.use(passport.session()); // passport를 쿠키로 로그인을 도와주는 
 
 app.use("/", pageRouter);
 app.use("/auth", authRouter);
+app.use("/post", postRouter);
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
