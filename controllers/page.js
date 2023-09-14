@@ -1,6 +1,7 @@
 const Post = require("../models/post");
 const User = require("../models/user");
 // const { Post, User } = require("../models") 로도 대체 가능
+const Hashtag = require("../models/hashtag");
 
 exports.renderProfile = (req, res) => {
   // 컨트롤러는 서비스를 호출한다.
@@ -28,6 +29,36 @@ exports.renderMain = async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
+    next(error);
+  }
+};
+
+exports.renderHashtag = async (req, res, next) => {
+  // req.query.hashtag
+  const query = req.query.hashtag; // 클라이언트로 부터 요청에 어떤 정보가 들어있는지 body,params,query인지 미리 생각하고 서버에서 처리하면 된다.
+
+  if (!query) {
+    // 쿼리가 없다면 메인화면으로
+    return res.redirect("/");
+  }
+
+  try {
+    const hashtag = await Hashtag.findOne({ where: { title: query } }); // 해시태그 검색
+    let posts = []; // 블록 스코프라 바까으로 빼줌. if문의 블록스코프
+    if (hashtag) {
+      // 해시태그가 있다면, 게시글을 찾아서 화면에 렌더링 해준다.
+      posts = await hashtag.getPosts({
+        // 옵션설정.
+        include: [{ model: User, attributes: ["id", "nick"] }],
+        order: [["createdAt", "DESC"]], // 최신으로 렌더링
+      }); // hashtag와 post가 관계가 맺어놨기 때문에 hashtag에 속해있는 post들을 getPosts로 가져올 수 있다.
+    }
+    return res.render("main", {
+      title: `${query} | NodeBird`,
+      twits: posts,
+    });
+  } catch (error) {
+    console.error(error);
     next(error);
   }
 };

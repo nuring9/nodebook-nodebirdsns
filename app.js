@@ -11,6 +11,7 @@ dotenv.config(); // 위치 중요
 const pageRouter = require("./routes/page");
 const authRouter = require("./routes/auth");
 const postRouter = require("./routes/post");
+const userRouter = require("./routes/user");
 
 const { sequelize } = require("./models"); // models에서 sequelize를 가져옴.
 const passportConfig = require("./passport"); // passport 설정을 불러옴.
@@ -56,6 +57,7 @@ app.use(passport.session()); // passport를 쿠키로 로그인을 도와주는 
 app.use("/", pageRouter);
 app.use("/auth", authRouter);
 app.use("/post", postRouter);
+app.use("/user", userRouter);
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
