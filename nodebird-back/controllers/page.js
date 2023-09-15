@@ -44,7 +44,7 @@ exports.renderHashtag = async (req, res, next) => {
 
   try {
     const hashtag = await Hashtag.findOne({ where: { title: query } }); // 해시태그 검색
-    let posts = []; // 블록 스코프라 바까으로 빼줌. if문의 블록스코프
+    let posts = []; // 블록 스코프라 바깥으로 빼줌. if문의 블록스코프
     if (hashtag) {
       // 해시태그가 있다면, 게시글을 찾아서 화면에 렌더링 해준다.
       posts = await hashtag.getPosts({

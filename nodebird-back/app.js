@@ -9,12 +9,12 @@ const passport = require("passport");
 
 dotenv.config(); // 위치 중요
 const pageRouter = require("./routes/page");
-const authRouter = require("./routes/auth");
+const authRouter = require("../nodebird-back/routes/auth");
 const postRouter = require("./routes/post");
 const userRouter = require("./routes/user");
 
-const { sequelize } = require("./models"); // models에서 sequelize를 가져옴.
-const passportConfig = require("./passport"); // passport 설정을 불러옴.
+const { sequelize } = require("../nodebird-back/models"); // models에서 sequelize를 가져옴.
+const passportConfig = require("../nodebird-back/passport"); // passport 설정을 불러옴.
 
 const app = express();
 passportConfig(); // 패스포드 설정
