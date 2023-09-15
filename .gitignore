@@ -48,4 +48,4 @@ uploads
 lecture-api
 lecture-call
 lecture
-node-deploy-*.json
+node-deploy-*.json.DS_Store
