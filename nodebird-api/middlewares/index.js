@@ -22,15 +22,15 @@ exports.verifyToken = (req, res, next) => {
   try {
     res.locals.decoded = jwt.verify(
       // jwt.verif로 토큰 검사가 끝나면, 내용물을 decoded 안에 넣는다.
-      req.headers.authoriztion, // 토큰은 보통  req.headers.authorization에 있는데, 꼭 그런건아니고 사용자에게 여기에 넣어달라고 요청.
+      req.headers.authorization, // 토큰은 보통  req.headers.authorization에 있는데, 꼭 그런건아니고 사용자에게 여기에 넣어달라고 요청.
       process.env.JWT_SECRET // 보안 철저
     );
     return next();
   } catch (error) {
     console.error(error);
-    if (error.name === "TokenExpriredError") {
-      // 유효기간 초과
-      res.status(419).json({
+    if (error.name === "TokenExpiredError") {
+      // TokenExpiredError 유효기간 초과
+      return res.status(419).json({
         code: 419,
         message: "토큰이 만료되었습니다.",
       });

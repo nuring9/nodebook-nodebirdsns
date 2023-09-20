@@ -1,7 +1,7 @@
 const { Domain, User } = require("../models");
 const jwt = require("jsonwebtoken");
 
-exports.createToken = async (req, res, next) => {
+exports.createToken = async (req, res) => {
   const { clientSecret } = req.body;
   try {
     const domain = await Domain.findOne({
@@ -10,7 +10,7 @@ exports.createToken = async (req, res, next) => {
       include: [
         {
           model: User,
-          attributes: ["id", "nick"],
+          attribute: ["id", "nick"],
         },
       ],
     });
@@ -27,8 +27,8 @@ exports.createToken = async (req, res, next) => {
         id: domain.User.id, // 사용자 id
         nick: domain.User.nick, //  사용자 닉네임, id와 nick이 내용물로 들어감.
       },
-      process.env_JWTSECRET,
-      { expiresIn: "1m", issuer: "nodebird" }
+      process.env.JWT_SECRET,
+      { expiresIn: "1m", issuer: "nuri" }
     ); // 마지막 옵션으로 유효기간을 적을 수 있다. 유효기간 1분, 발급자를 nodebird
     return res.json({
       code: 200,
@@ -45,6 +45,6 @@ exports.createToken = async (req, res, next) => {
   }
 };
 
-exports.tokenTest = async (req, res, next) => {
+exports.tokenTest = async (req, res) => {
   res.json(res.locals.decoded); // 토큰 내용물들 그대로 다시 돌려주면 된다. (프론트에 표시해주는)
 };

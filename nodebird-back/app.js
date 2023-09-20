@@ -21,8 +21,8 @@ passportConfig(); // 패스포드 설정
 app.set("port", process.env.PORT || 8001);
 app.set("view engine", "html");
 nunjucks.configure("views", {
-  express: app,
-  watch: true,
+  express: app, // express에 app 객체 연결
+  watch: true, // HTML 파일이 변경될 때에 템플릿 엔진을 reload하게 됨.
 });
 sequelize
   .sync({ force: false }) // 개발시에 테이블 잘못 만들었을 때 force: true 해둔 다음 서버 재시작하면 테이블들 싹 제거됬다가 다시 생성된다. 배포할땐 꼭 false
