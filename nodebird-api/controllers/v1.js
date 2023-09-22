@@ -1,4 +1,4 @@
-const { Domain, User } = require("../models");
+const { Domain, User, Post, Hashtag } = require("../models");
 const jwt = require("jsonwebtoken");
 
 exports.createToken = async (req, res) => {
@@ -47,4 +47,59 @@ exports.createToken = async (req, res) => {
 
 exports.tokenTest = async (req, res) => {
   res.json(res.locals.decoded); // 토큰 내용물들 그대로 다시 돌려주면 된다. (프론트에 표시해주는)
+};
+
+exports.getMyPosts = (req, res) => {
+  // 내 게시글들 가져오기
+  Post.findAll({ where: { userID: res.locals.decoded.id } }) // middlewares의 verifyToken 함수의 토큰 검증 후 내용물의 id
+    // 프로미스라서 then과 catch 사용
+    .then((posts) => {
+      // 내 게시글들
+      console.log(posts);
+      res.json({
+        code: 200,
+        payload: posts,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      return res.status(500).json({
+        code: 500,
+        massage: "서버 에러",
+      });
+    });
+};
+
+exports.getPostsByHashtag = async (req, res) => {
+  // 해시태그 검색 결과 가져오기.
+  try {
+    const hashtag = await Hashtag.findOne({
+      where: { title: req.params.title },
+      // /posts/hashtag/:title 이니까 req.params.title로 가져옴.
+    });
+    if (!hashtag) {
+      // 해시태그가 한번ㄷ 쓰이지 않았을 경우,
+      return res.status(404).json({
+        code: 404,
+        message: "검색결과가 없습니다",
+      });
+    }
+    const posts = await hashtag.getPosts(); // 해시태그에 딸린 게시글들 가져옴.
+    if (posts.length === 0) {
+      return res.status(404).json({
+        code: 404,
+        message: "검색결과가 없습니다",
+      });
+    }
+    return res.json({
+      code: 200,
+      payload: posts,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: "서버 에러",
+    });
+  }
 };
