@@ -60,7 +60,7 @@ const request = async (req, api) => {
       delete req.session.jwt; // 만료된 토큰 구지 메모리에 저장되어있을 필요가 없다.
       return request(req, api); // 재귀함수로 다시 호출하면 세션이 없는상태이므로, 토큰을 새로 다시 발급. 토큰을 발급받자마자 다시 요청을 보내면 만료되어있지 않다.
     }
-    throw error.response; // return 말고 throw 한 이유: getMyPosts의 result에서 에러가 발생하면 catch로 잡을 수 있다.
+    return error.response; // return 말고 throw 한 이유: getMyPosts의 result에서 에러가 발생하면 catch로 잡을 수 있다.
     // 위조되었거나 그 외 에러처리
   }
 };

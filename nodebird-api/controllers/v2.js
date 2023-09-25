@@ -28,7 +28,7 @@ exports.createToken = async (req, res) => {
         nick: domain.User.nick, //  사용자 닉네임, id와 nick이 내용물로 들어감.
       },
       process.env.JWT_SECRET,
-      { expiresIn: "30m", issuer: "nuri" }
+      { expiresIn: "1m", issuer: "nuri" }
     ); // 마지막 옵션으로 유효기간을 적을 수 있다. 유효기간 1분, 발급자를 nodebird
     return res.json({
       code: 200,

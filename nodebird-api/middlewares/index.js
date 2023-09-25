@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const reteLimit = require("express-rate-limit");
 
 exports.isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
@@ -40,4 +41,44 @@ exports.verifyToken = (req, res, next) => {
       message: "유효하지 않는 토큰입니다.",
     });
   }
+};
+
+exports.apiLimiter = reteLimit({
+  windowMs: 60 * 1000, // 1분
+  max: 10, // 최대 1분에 열번번만.
+  handler(req, res) {
+    // api 요청 추가 시 응답 핸들러
+    res.status(this.statusCode).json({
+      code: this.statusCode,
+      message: "1분에 한번만 요청",
+    });
+  },
+});
+
+/* 미들웨어 확장 패턴으로 일반회원과 프리미엄 회원 구분하여 limit 적용 예:
+exports.apiLimiter = async (req, res, next) => {
+  let user;
+  if (res.locals.decoded) {
+    user = await User.findOne({ where: { id: res.locals.decoded.id } });
+  }
+  reteLimit({
+    windowMs: 60 * 1000, // 1분
+    max: user?.type === premium ? 1000 : 10, // 최대 1분에 열번번만.
+    handler(req, res) {
+      // api 요청 추가 시 응답 핸들러
+      res.status(this.statusCode).json({
+        code: this.statusCode,
+        message: "1분에 한번만 요청",
+      });
+    },
+  })(req, res, next);
+};
+*/
+
+exports.deprecated = (req, res) => {
+  // 예전 버전 사용 금지 미들웨어
+  res.status(410).json({
+    code: 410,
+    message: "새로운 버전 나왔으니, 새로운 버전을 사용하세요.",
+  });
 };
