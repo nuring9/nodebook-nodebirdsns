@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const reteLimit = require("express-rate-limit");
+const cors = require("cors");
+const Domain = require("../models/domain");
 
 exports.isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
@@ -81,4 +83,19 @@ exports.deprecated = (req, res) => {
     code: 410,
     message: "새로운 버전 나왔으니, 새로운 버전을 사용하세요.",
   });
+};
+
+exports.corsWhenDomainMatches = async (req, res, next) => {
+  const domain = await Domain.findOne({
+    where: { host: new URL(req.get("origin")).host }, // origin header를 가져와서 url 분석을 통해서, host만 추출.
+    // new URL로 감싼 다음 host를 추출하면 http가 떨어진다.
+  });
+  if (domain) {
+    cors({
+      origin: req.get("origin"), // http가 붙어있음.
+      credentials: true,
+    })(req, res, next);
+  } else {
+    next();
+  }
 };
