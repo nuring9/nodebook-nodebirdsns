@@ -21,8 +21,11 @@ const basename = path.basename(__filename);
 fs.readdirSync(__dirname) // 현재폴더의 모든 파일을 조회
   .filter((file) => {
     return (
-      file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".js"
-    ); // 숨긴파일과 index.js는 모델이 아니기 때문에 제외, 끝에서 3번째 자리수까지만 .js확장자만 포함
+      file.indexOf(".") !== 0 &&
+      !file.includes("test") &&
+      file !== basename &&
+      file.slice(-3) === ".js"
+    ); // 숨긴파일과 테스트 파일, js 확장자가 아닌 파일은 모델이 아니기 때문에 제외, 끝에서 3번째 자리수까지만 .js확장자만 포함
   })
   .forEach((file) => {
     // 필터링 된 모델폴더안에 있는 파일들을 require 불러온다.
