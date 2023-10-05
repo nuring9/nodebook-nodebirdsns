@@ -29,7 +29,7 @@ module.exports = () => {
             }
           } else {
             // 사용자가 없는 경우,
-            done(null, false, { messate: "가입되지 않는 회원입니다." });
+            done(null, false, { message: "가입되지 않는 회원입니다." });
           }
         } catch (error) {
           console.error(error);
