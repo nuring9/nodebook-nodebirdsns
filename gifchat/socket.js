@@ -1,32 +1,34 @@
-const WebSocket = require("ws");
+const SocketIO = require("socket.io");
 
 module.exports = (server) => {
-  const wss = new WebSocket.Server({ server }); // app의 server를 websocket의 Server에 연결.
+  const io = SocketIO(server, { path: "/socket.io" });
 
-  wss.on("connection", (ws, req) => {
+  io.on("connection", (socket) => {
     // 웹소켓 연결 시
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress; // ip 가져오는 방법 2가지.
-    console.log("새로운 클라이언트 접속", ip);
-    ws.on("message", (message) => {
-      // 클라이언트로부터 메세지
-      console.log(message.toString()); // 버퍼이기 때문에 toString으로 바꿔줘야함.
+    const req = socket.request; // soket에 request 속성이 있음.
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress; // ip 가져오는 방법은 동일
+    console.log("새로운 클라이언트 접속", ip, socket.id, req.id); // socket.io는 연결할때마다 소켓에 아이디를 하나씩 부여함. 이 아이디로 특정인에게 메세지를 보낼수도 있고, 연결을 끊을 수도 있다.
+
+    socket.on("disconnect", () => {
+      // 접속 해제
+      console.log("클라이언트 접속 해제", ip, socket.id);
+      clearInterval(socket.interval);
     });
-    ws.on("error", (error) => {
+
+    socket.on("error", (error) => {
       // 에러 시
       console.log(error);
     });
-    ws.on("close", () => {
-      // 연결 종료 시
-      console.log("클라이언트 접속 해제", ip);
-      clearInterval(ws.interval);
+
+    socket.on("reply", (data) => {
+      // 클라이언트로부터 메시지
+      console.log(data); //  toString하지 않아도 됨.
     });
 
-    ws.interval = setInterval(() => {
+    socket.interval = setInterval(() => {
       // 3초마다 클라이언트로 메세지 전송
-      if (ws.readyState === ws.OPEN) {
-        // 웹소켓에 있는 readyState가 OPEN 상태일 때 메세지를 보낸다.
-        ws.send("서버에서 클라이언트로 메세지를 보냅니다.");
-      }
+      // socket은 알아서 연결 체크해주므로 if문을 따로 사용하지 않아도 됨.
+      socket.emit("news", "Hello Socket.IO");
     }, 3000);
   });
 };
