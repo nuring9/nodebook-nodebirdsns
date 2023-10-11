@@ -1,0 +1,85 @@
+const Room = require("../schemas/room");
+const Chat = require("../schemas/chat");
+
+exports.renderMain = async (req, res, next) => {
+  try {
+    const rooms = await Room.find({}); // 방 목록 전체 가져오기
+    res.render("main", { rooms, title: "GIF 채팅방" });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+exports.renderRoom = (req, res) => {
+  res.render("room", { title: "GIF 채팅방 생성" });
+};
+
+exports.createRoom = async (req, res, next) => {
+  try {
+    const newRoom = await Room.create({
+      title: req.body.title,
+      max: req.body.max,
+      owner: req.session.color,
+      password: req.body.password,
+    });
+    const io = req.app.get("io");
+    io.of("/room").emit("newRoom", newRoom); // maint.html의 newRoom이 실행
+    // 방을 들어간가는 부분 if문 구절
+    if (req.body.password) {
+      // 비밀번호가 있으면 방 아이디 뒤에 비밀번호를 붙여준다. (비밀번호를 까먹었을까바 붙여줌)
+      res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
+    } else {
+      res.redirect(`/room/${newRoom._id}`);
+    }
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+exports.enterRoom = async (req, res, next) => {
+  try {
+    const room = await Room.findOne({ _id: req.params.id });
+    if (!room) {
+      // 렌더링 전에 방이 존재하는지
+      return res.redirect("/?error=존재하지 않는 방입니다.");
+    }
+    if (room.password && room.password !== req.query.password) {
+      // 비밀방일 경우에는 비밀번호가 맞는지
+      // 방에 비밀버호가 있는데, 방에 비밀번호랑 입력한 비밀번호가 다를 경우
+      // res.redirect(`/room/${newRoom._id}?password=${req.body.password}`); 여기서 확인
+
+      return res.redirect("/?error=비밀번호가 틀렸습니다.");
+    }
+
+    const io = req.app.get("io");
+    //허용 인원을 초과하지는 않았는지 검사를 socket 갯수로 검사할 수 있다.
+    const { rooms } = io.of("/chat").adapter; // .adapter을 사용하여 특정 방을 조회
+    if (room.max <= rooms.get(req.params.id)?.size) {
+      //  특정 방의 소켓 갯수 socket.join(data);가 max보다 크거나 같을 때
+      return res.redirect("/?error=허용 인원을 초과했습니다.");
+    }
+    return res.render("chat", {
+      room,
+      title: room.title,
+      chats: [],
+      user: req.session.color,
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+exports.removeRoom = async (req, res, next) => {
+  try {
+    // room부터 지우고, 방에 속한 모든 chat을 지운다.
+    await Room.deleteOne({ _id: req.params.id });
+    await Chat.deleteMany({ room: req.params.id });
+    res.send("ok");
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
