@@ -26,17 +26,18 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // form으로 부터 querystring모듈 사용.
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(
-  session({
-    resave: false, // 매 request 마다 세션을 계속 다시 저장하는 것을 끔.
-    saveUninitialized: false, // empty session obj가 쌓이는 걸 방지해 서버 스토리지를 아낄 수 있음. 쿠키 사용 정책 준수
-    secret: process.env.COOKIE_SECRET,
-    cookie: {
-      httpOnly: true, // 자바스크립트 접근 금지
-      secure: false, // https 관련 추후 배포시 변경.
-    },
-  })
-);
+
+const sessionMiddleware = session({
+  // session을 변수로 분리
+  resave: false, // 매 request 마다 세션을 계속 다시 저장하는 것을 끔.
+  saveUninitialized: false, // empty session obj가 쌓이는 걸 방지해 서버 스토리지를 아낄 수 있음. 쿠키 사용 정책 준수
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    httpOnly: true, // 자바스크립트 접근 금지
+    secure: false, // https 관련 추후 배포시 변경.
+  },
+});
+app.use(sessionMiddleware);
 app.use((req, res, next) => {
   if (!req.session.color) {
     const colorHash = new ColorHash();
@@ -65,4 +66,4 @@ const server = app.listen(app.get("port"), () => {
   console.log(app.get("port"), "번 포트에서 대기중");
 });
 
-webSocket(server, app); // 서버와 웹소켓을 연결
+webSocket(server, app, sessionMiddleware); // 서버, express app, sessionMiddleware를 웹소켓에 연결을 위해 넘겨줌.

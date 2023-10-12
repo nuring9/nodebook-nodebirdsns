@@ -1,5 +1,7 @@
 const Room = require("../schemas/room");
 const Chat = require("../schemas/chat");
+const { removeRoom: remeveRoomService } = require("../services");
+// 변수가 겹칠 수 있으니 변경.
 
 exports.renderMain = async (req, res, next) => {
   try {
@@ -74,9 +76,8 @@ exports.enterRoom = async (req, res, next) => {
 
 exports.removeRoom = async (req, res, next) => {
   try {
-    // room부터 지우고, 방에 속한 모든 chat을 지운다.
-    await Room.deleteOne({ _id: req.params.id });
-    await Chat.deleteMany({ room: req.params.id });
+    // room부터 지우고, 방에 속한 모든 chat을 지운다. 서비스로 분리한 로직을 가져와 사용.
+    await remeveRoomService(req.params.id);
     res.send("ok");
   } catch (error) {
     console.error(error);
