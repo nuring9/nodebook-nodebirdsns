@@ -21,12 +21,6 @@ nunjucks.configure("views", {
 });
 connect();
 
-app.use(morgan("dev"));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false })); // form으로 부터 querystring모듈 사용.
-app.use(cookieParser(process.env.COOKIE_SECRET));
-
 const sessionMiddleware = session({
   // session을 변수로 분리
   resave: false, // 매 request 마다 세션을 계속 다시 저장하는 것을 끔.
@@ -37,7 +31,15 @@ const sessionMiddleware = session({
     secure: false, // https 관련 추후 배포시 변경.
   },
 });
+
+app.use(morgan("dev"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/gif", express.static(path.join(__dirname, "uploads"))); // gif라는 주소로, uploads 폴더에 접근.
+app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // form으로 부터 querystring모듈 사용.
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(sessionMiddleware);
+
 app.use((req, res, next) => {
   if (!req.session.color) {
     const colorHash = new ColorHash();

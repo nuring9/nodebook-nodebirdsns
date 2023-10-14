@@ -62,10 +62,11 @@ exports.enterRoom = async (req, res, next) => {
       //  특정 방의 소켓 갯수 socket.join(data);가 max보다 크거나 같을 때
       return res.redirect("/?error=허용 인원을 초과했습니다.");
     }
+    const chats = await Chat.find({ room: room._id }).sort("createdAt"); // 채팅을 찾고 시간순으로정렬 렌더링 해줌.
     return res.render("chat", {
       room,
       title: room.title,
-      chats: [],
+      chats,
       user: req.session.color,
     });
   } catch (error) {
@@ -79,6 +80,42 @@ exports.removeRoom = async (req, res, next) => {
     // room부터 지우고, 방에 속한 모든 chat을 지운다. 서비스로 분리한 로직을 가져와 사용.
     await remeveRoomService(req.params.id);
     res.send("ok");
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+exports.sendChat = async (req, res, next) => {
+  try {
+    const chat = await Chat.create({
+      // form에서 전달될 데이터들
+      room: req.params.id,
+      user: req.session.color,
+      chat: req.body.chat,
+    });
+    // 채팅을 새로 만들었으면 실시간으로 전송
+    req.app.get("io").of("/chat").to(req.params.id).emit("chat", chat); // chat네임스페이스에 먼저 들어간 다음, 그 방아이디 안의 소켓들에게만 그 채팅 내용을 보냄.
+    res.send("ok");
+    // 여기서 보낸게 chat.html 의 'chat'의 data로 보내진다.
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+exports.sendGif = async (req, res, next) => {
+  try {
+    const chat = await Chat.create({
+      // form에서 전달될 데이터들
+      room: req.params.id,
+      user: req.session.color,
+      gif: req.file.filename, // DB에는 파일이 아니라, 파일이름이 저장되야 함.
+    });
+    // 채팅을 새로 만들었으면 실시간으로 전송
+    req.app.get("io").of("/chat").to(req.params.id).emit("chat", chat); // chat네임스페이스에 먼저 들어간 다음, 그 방아이디 안의 소켓들에게만 그 채팅 내용을 보냄.
+    res.send("ok");
+    // 여기서 보낸게 chat.html 의 'chat'의 data로 보내진다.
   } catch (error) {
     console.error(error);
     next(error);
