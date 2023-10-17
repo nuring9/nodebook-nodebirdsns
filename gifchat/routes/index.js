@@ -35,7 +35,6 @@ try {
   fs.mkdirSync("uploads"); // 없으면 디렉토리 생성.
 }
 
-/*
 const upload = multer({
   storage: multer.diskStorage({
     destination(req, file, done) {
@@ -44,23 +43,10 @@ const upload = multer({
     filename(req, file, done) {
       const ext = path.extname(file.originalname); // 파일 이름에서 확장자 추출
       done(null, path.basename(file.originalname, ext) + Date.now() + ext);
-    }, // 파일 이름에서 확장자를 떼고, 현재 날짜를 더해준 다음 다시 확장자를 붙여줌.
+      // 파일 이름에서 확장자를 떼고, 현재 날짜를 더해준 다음 다시 확장자를 붙여줌.
+    },
   }),
   limits: { fileSize: 5 * 1024 * 1024 }, // 파일 사이즈 5MG
-});
-*/
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination(req, file, done) {
-      done(null, "uploads/");
-    },
-    filename(req, file, done) {
-      const ext = path.extname(file.originalname);
-      done(null, path.basename(file.originalname, ext) + Date.now() + ext);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 router.post("/room/:id/gif", upload.single("gif"), sendGif); // gif 이미지 업로드 라우터
