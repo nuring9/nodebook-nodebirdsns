@@ -9,6 +9,8 @@ const {
   renderJoin,
   renderGood,
   createGood,
+  renderAuction,
+  bid,
 } = require("../controllers");
 
 const router = express.Router();
@@ -26,10 +28,10 @@ router.get("/join", isNotLoggedIn, renderJoin);
 router.get("/good", isLoggedIn, renderGood);
 
 try {
-  fs.readdirSync("uploads"); // 업로즈 폴더를 읽는다. (동기)
+  fs.readdirSync("uploads");
 } catch (error) {
   console.error("uploads 폴더가 없어 uploads 폴더를 생성합니다.");
-  fs.mkdirSync("uploads"); // 없으면 폴더 생성.
+  fs.mkdirSync("uploads");
 }
 const upload = multer({
   storage: multer.diskStorage({
@@ -47,5 +49,9 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 router.post("/good", isLoggedIn, upload.single("img"), createGood);
+
+router.get("/good/:id", isLoggedIn, renderAuction);
+
+router.post("/good/:id/bid", isLoggedIn, bid);
 
 module.exports = router;

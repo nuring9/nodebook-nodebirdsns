@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { Good } = require("../models");
+const { Good, Auction, User } = require("../models");
 
 // res.locals.user + res.render의 두번째 인수객체랑 합쳐져서 넘어간다.
 
@@ -49,5 +49,81 @@ exports.createGood = async (req, res, next) => {
   } catch (err) {
     console.error(err);
     next(err);
+  }
+};
+
+// 해당 상품과 기존 입찰 정보들을 불러온 뒤 렌더링.
+exports.renderAuction = async (req, res, next) => {
+  try {
+    const [good, auction] = await Promise.all([
+      Good.findOne({
+        where: { id: req.params.id },
+        include: {
+          model: User,
+          as: "Owner",
+        },
+      }),
+      Auction.findAll({
+        where: { GoodId: req.params.id },
+        include: { model: User },
+        order: [["bid", "ASC"]],
+      }),
+    ]);
+    res.render("auction", {
+      // auction.html의 상품 정보(상품, 입찰내역)를 불러온다.
+      title: `${good.name} - NodeAuction`,
+      good,
+      auction,
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+// 클라이언트로부터 받은 입찰 정보.
+exports.bid = async (req, res, next) => {
+  try {
+    const { bid, msg } = req.body; // 프론트로부터 입찰가격과 메세지를 받는다.
+    const good = await Good.findOne({
+      where: { id: req.params.id },
+      include: { model: Auction },
+      order: [[{ model: Auction }, "bid", "DESC"]], // include된 객체의 bid를 내림차순으로 정령
+    });
+    // 상품을 찾아서 제약 조건들을 검사할 수 있다.
+
+    if (!good) {
+      // 상품이 없을 경우,
+      return res.status(404).send("해당 상품은 존재하지 않습니다.");
+    }
+    if (good.price >= bid) {
+      // 상품의 가격이 입력한 입찰가보다 크거나 같으면, 즉, 입찰가격을 낮게 입력.
+      return res.status(403).send("시작 가격보다 높게 입찰해야 합니다.");
+    }
+    if (new Date(good.createdAt).valueOf() + 24 * 60 * 60 * 1000 < new Date()) {
+      // 상품 생성시간을 밀리초로 변환 후, 24시간이 지금 시간보다 작은 경우. 즉, 24시간이 지나지 않았는지
+      return res.status(403).send("경매가 이미 종료되었습니다");
+    }
+    if (good.Auctions[0]?.bid >= bid) {
+      // 상품들중 하나라도 있다면, 상품의 입찰가가 입력한 입찰보다 크거나 같으면. 즉, 새로운 입찰가가 더 높은지
+      return res.status(403).send("이전 입찰가보다 높아야 합니다");
+    }
+    const result = await Auction.create({
+      // 데이터 생성
+      bid,
+      msg,
+      UserId: req.user.id,
+      GoodId: req.params.id,
+    });
+    // 실시간으로 입찰 내역 전송
+    req.app.get("io").to(req.params.id).emit("bid", {
+      bid: result.bid,
+      msg: result.msg,
+      nick: req.user.nick,
+    });
+    return res.send("ok");
+  } catch (err) {
+    console.error(err);
+    return next(err);
   }
 };
