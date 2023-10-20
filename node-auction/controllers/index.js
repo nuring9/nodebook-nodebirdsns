@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
-const { Good, Auction, User } = require("../models");
+const { Good, Auction, User, sequelize } = require("../models");
+const schedule = require("node-schedule");
 
 // res.locals.user + res.render의 두번째 인수객체랑 합쳐져서 넘어간다.
 
@@ -39,11 +40,36 @@ exports.renderGood = (req, res) => {
 exports.createGood = async (req, res, next) => {
   try {
     const { name, price } = req.body;
-    await Good.create({
+    const good = await Good.create({
       OwnerId: req.user.id,
       name,
       img: req.file.filename,
       price,
+    });
+    const end = new Date(); // 현재시간
+    end.setDate(end.getDate() + 1); // 하루 뒤
+    const job = schedule.scheduleJob(end, async () => {
+      const success = await Auction.findOne({
+        where: { GoodId: good.id },
+        order: [["bid", "DESC"]], // 입찰가로 내림차순으로 정렬했을 때 제일 큰 가격이 입찰가
+      });
+      await good.setSold(success.UserId); // good(상품)의 sold가 낙찰자이기 때문에, 거기에 낙찰자 id를 넣어준다.
+      console.log(setSold);
+      await User.update(
+        {
+          money: sequelize.literal(`money - ${success.bid}`), // money에서 낙찰가를 뺀다.
+          // 구현해야할 SQL문이 "SET money = money - 1000000"인데, 이 부분을 시퀄라이즈 자바스크립트로는 표현하기 함들다.
+          // 그래서 sequelize의 literal을 사용하여 SQL문을 그대로 넣어줄 수 있다. 즉, 인자에 적힌 스트링을 그대로 SQL 문법으로 변환.
+        },
+        {
+          where: { id: success.UserId }, // 낙찰자
+        }
+      );
+    });
+    //job에 이벤트리스터를 달아서 혹시나 에러가 났을 때와 성공했을 때 처리.
+    job.on("error", console.error); // 에러 로깅
+    job.on("success", () => {
+      console.log(`${good.id} 스케줄링 성공`);
     });
     res.redirect("/");
   } catch (err) {
