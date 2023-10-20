@@ -153,3 +153,20 @@ exports.bid = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.renderList = async (req, res, next) => {
+  try {
+    const goods = await Good.findAll({
+      where: { SoldId: req.user.id },
+      // 낙찰자 아이디가 나여야 한다.
+      include: { model: Auction },
+      // 낙찰 내역
+      order: [[{ model: Auction }, "bid", "DESC"]],
+      // list에서 <td>{{good.Auctions[0].bid}}</td> 의 낙찰 가격을 보여주기 위해서 order를 넣어줌.
+    });
+    res.render("list", { title: "낙찰 목록 - NodeAuction", goods });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
