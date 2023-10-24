@@ -5,6 +5,7 @@ const readline = require("readline");
 
 // 0,1번째 index는 노드와 그파일 이름이였다, 그래서 실제적으로 우리가 입력하는것은 2번 index부터 시작이기 때문에 2,3,4에 필요한 옵션을 넣어준다.
 // npx cil html main .  -> main.html이 생성된다.
+let rl;
 let type = process.argv[2];
 let name = process.argv[3];
 let directory = process.argv[4] || ".";
@@ -94,9 +95,50 @@ const makeTemplate = () => {
   }
 };
 
+const dirAnswer = (answer) => {
+  // 경로 설정
+  directory = answer?.trim() || ".";
+  rl.close();
+  makeTemplate();
+};
+
+const nameAnswer = (answer) => {
+  // 파일명 설정
+  if (!answer || !answer.trim()) {
+    // 이름을 입력하지 않으면,
+    console.clear();
+    console.log("name을 반드시 입력하셔야 합니다.");
+    return rl.question("파일명을 설정하세요. ", nameAnswer);
+  }
+  name = answer;
+  return rl.question(
+    "저장할 경로를 설정하세요.(설정하지 않으면 현재경로) ",
+    dirAnswer
+  );
+  // 파일 저장할 경로 질문
+};
+
+const typeAnswer = (answer) => {
+  // 템플릿 종류 설정
+  if (answer !== "html" && answer !== "express-router") {
+    console.clear();
+    console.log("html 또는 express-router만 지원합니다.");
+    return rl.question("어떤 템플릿이 필요하십니까? ", typeAnswer);
+  }
+  type = answer;
+  // 올바르게 대답을 했다면, type에 저장한다.
+  return rl.question("파일명을 설정하세요. ", nameAnswer);
+  // 그 다음 질문을 함.
+};
+
 const program = () => {
   if (!type || !name) {
-    console.error("사용 방법: cli html|express-router 파일명 [생성 경로]");
+    rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    console.clear();
+    rl.question("어떤 템플릿이 필요하십니까? ", typeAnswer);
   } else {
     makeTemplate();
   }
